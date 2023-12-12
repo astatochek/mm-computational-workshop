@@ -20,7 +20,7 @@ def triangle_method(
     tau: List[np.float64],
     eps: np.float64,
 ):
-    f_h = get_f_grid(x_vec, y_vec)
+    f_grid = get_f_grid(x_vec, y_vec)
     k = 0
     kappa_1 = omega / x_step**2
     kappa_2 = omega / y_step**2
@@ -30,17 +30,15 @@ def triangle_method(
     u_k_list = [u_0]
     exact = get_exact_solution(x_vec, y_vec)
 
-    stop_condition = (
-        lambda u_cur, u_0, exact, eps: matrix_norm(u_cur - exact)
-        / matrix_norm(u_0 - exact)
-        > eps
+    should_continue = (
+        lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
     )
     # while k < iter:
-    while stop_condition(u_cur, u_0, exact, eps):
+    while should_continue(u_cur, exact, eps):
         lower_w = np.zeros((len(x_vec), len(y_vec)))
         upper_w = np.zeros((len(x_vec), len(y_vec)))
         
-        F = calculate_lhu(u_prev, x_vec, y_vec, x_step, y_step) + f_h
+        F = calculate_lhu(u_prev, x_vec, y_vec, x_step, y_step) + f_grid
 
         for i in range(1, len(x_vec) - 1):
             for j in range(1, len(y_vec) - 1):

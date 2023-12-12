@@ -24,13 +24,11 @@ def upper_relaxation_method(
     u_k_list = [u_0]
     exact = get_exact_solution(x, y)
 
-    stop_condition = (
-        lambda u_cur, u_0, exact, eps: matrix_norm(u_cur - exact)
-        / matrix_norm(u_0 - exact)
-        > eps
+    should_continue = (
+        lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
     )
     # while k < iter:
-    while stop_condition(u_cur, u_0, exact, eps):
+    while should_continue(u_cur, exact, eps):
         for i in range(1, len(x) - 1):
             for j in range(1, len(y) - 1):
                 delta_x_sq = step_x**2
