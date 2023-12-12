@@ -37,13 +37,11 @@ def iteration_optimal(
     u_k_list = [u_0]
     exact = get_exact_solution(x_vec, y_vec)
 
-    stop_condition = (
-        lambda u_cur, u_0, exact, eps: matrix_norm(u_cur - exact)
-        / matrix_norm(u_0 - exact)
-        > eps
+    should_continue = (
+        lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
     )
     # while k < iter:
-    while stop_condition(u_cur, u_0, exact, eps):
+    while should_continue(u_cur, exact, eps):
         for i in range(1, len(x_vec) - 1):
             for j in range(1, len(y_vec) - 1):
                 delta_x_sq = x_step**2
