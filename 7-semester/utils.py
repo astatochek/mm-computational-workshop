@@ -5,11 +5,11 @@ from definitions import mu, f, p, q
 
 def calc_ksi(c1: np.float64, c2: np.float64, d1: np.float64, d2: np.float64, x_step: np.float64,
              y_step: np.float64) -> np.float64:
-    sigma = c1 * (4 / (x_step ** 2)) * ((np.sin((np.pi * x_step) / 2)) ** 2) + d1 * (4 / (y_step ** 2)) * (
+    delta1 = c1 * (4 / (x_step ** 2)) * ((np.sin((np.pi * x_step) / 2)) ** 2) + d1 * (4 / (y_step ** 2)) * (
                 (np.sin((np.pi * y_step) / (2 * np.pi))) ** 2)
-    delta = c2 * (4 / (x_step ** 2)) * ((np.cos((np.pi * x_step) / 2)) ** 2) + d2 * (4 / (y_step ** 2)) * (
+    delta2 = c2 * (4 / (x_step ** 2)) * ((np.cos((np.pi * x_step) / 2)) ** 2) + d2 * (4 / (y_step ** 2)) * (
                 (np.cos((np.pi * y_step) / (2 * np.pi))) ** 2)
-    return sigma / delta
+    return delta1 / delta2
 
 
 def spectral_radius_approx(ksi: np.float64) -> float:
@@ -39,7 +39,7 @@ def matrix_norm(matrix: NDArray) -> np.float64:
     return np.max(np.abs(matrix.flatten()))
 
 
-def get_exact_solution(x_vec: NDArray, y_vec: NDArray) -> NDArray:
+def get_expected_solution_grid(x_vec: NDArray, y_vec: NDArray) -> NDArray:
     exact = np.zeros((len(x_vec), len(y_vec)))
     for i in range(len(x_vec)):
         for j in range(len(y_vec)):
@@ -47,21 +47,21 @@ def get_exact_solution(x_vec: NDArray, y_vec: NDArray) -> NDArray:
     return exact
 
 
-def get_f_grid(x_i: NDArray, y_i: NDArray) -> NDArray:
-    grid = np.zeros((len(x_i), len(y_i)))
-    for i in range(len(x_i)):
-        for j in range(len(y_i)):
-            grid[i][j] = f(x_i[i], y_i[j])
+def get_f_grid(x_vec: NDArray, y_vec: NDArray) -> NDArray:
+    grid = np.zeros((len(x_vec), len(y_vec)))
+    for i in range(len(x_vec)):
+        for j in range(len(y_vec)):
+            grid[i][j] = f(x_vec[i], y_vec[j])
     return grid
 
 
-def calculate_lhu(u: NDArray, x: NDArray, y: NDArray, hx: np.float64, hy: np.float64) -> NDArray:
-    lhu = np.zeros((len(x), len(y)))
-    for i in range(1, len(x) - 1):
-        for j in range(1, len(y) - 1):
-            term1 = p(x[i] + hx / 2, y[j]) * (u[i + 1][j] - u[i][j]) / hx ** 2
-            term2 = p(x[i] - hx / 2, y[j]) * (u[i][j] - u[i - 1][j]) / hx ** 2
-            term3 = q(x[i], y[j] + hy / 2) * (u[i][j + 1] - u[i][j]) / hy ** 2
-            term4 = q(x[i], y[j] - hy / 2) * (u[i][j] - u[i][j - 1]) / hy ** 2
-            lhu[i][j] = term1 - term2 + term3 - term4
-    return lhu
+def calc_l_u(u: NDArray, x_vec: NDArray, y_vec: NDArray, x_step: np.float64, y_step: np.float64) -> NDArray:
+    l_u = np.zeros((len(x_vec), len(y_vec)))
+    for i in range(1, len(x_vec) - 1):
+        for j in range(1, len(y_vec) - 1):
+            p1 = p(x_vec[i] + x_step / 2, y_vec[j]) * (u[i + 1][j] - u[i][j]) / x_step ** 2
+            p2 = p(x_vec[i] - x_step / 2, y_vec[j]) * (u[i][j] - u[i - 1][j]) / x_step ** 2
+            q1 = q(x_vec[i], y_vec[j] + y_step / 2) * (u[i][j + 1] - u[i][j]) / y_step ** 2
+            q2 = q(x_vec[i], y_vec[j] - y_step / 2) * (u[i][j] - u[i][j - 1]) / y_step ** 2
+            l_u[i][j] = p1 - p2 + q1 - q2
+    return l_u

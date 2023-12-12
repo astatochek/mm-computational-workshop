@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.typing import NDArray
 from definitions import p, q, f
-from utils import fill_boundary_grid, get_exact_solution, matrix_norm
+from utils import fill_boundary_grid, get_expected_solution_grid, matrix_norm
 
 
 def simple_iteration_method(
@@ -16,36 +16,36 @@ def simple_iteration_method(
     u_prev = fill_boundary_grid(x_vec, y_vec)
     u_cur = fill_boundary_grid(x_vec, y_vec)
     u_0 = np.copy(u_prev)
-    u_k_list = [u_0]
-    exact = get_exact_solution(x_vec, y_vec)
+    u_list = [u_0]
+    expected = get_expected_solution_grid(x_vec, y_vec)
 
-    should_continue = lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
+    should_continue = lambda u_cur: matrix_norm(u_cur - expected) > eps
     # while k < iter:
-    while should_continue(u_cur, exact, eps):
+    while should_continue(u_cur):
         for i in range(1, len(x_vec) - 1):
             for j in range(1, len(y_vec) - 1):
-                a = (
+                p1 = (
                     p(x_vec[i] - step_x / 2, y_vec[j]) * u_prev[i - 1][j]
                 ) / step_x**2
-                b = (
+                p2 = (
                     p(x_vec[i] + step_x / 2, y_vec[j]) * u_prev[i + 1][j]
                 ) / step_x**2
-                c = (
+                q1 = (
                     q(x_vec[i], y_vec[j] - step_y / 2) * u_prev[i][j - 1]
                 ) / step_y**2
-                d = (
+                q2 = (
                     q(x_vec[i], y_vec[j] + step_y / 2) * u_prev[i][j + 1]
                 ) / step_y**2
-                a_d = (p(x_vec[i] - step_x / 2, y_vec[j])) / step_x**2
-                b_d = (p(x_vec[i] + step_x / 2, y_vec[j])) / step_x**2
-                c_d = (q(x_vec[i], y_vec[j] - step_y / 2)) / step_y**2
-                d_d = (q(x_vec[i], y_vec[j] + step_y / 2)) / step_y**2
-                u_cur[i][j] = (a + b + c + d + f(x_vec[i], y_vec[j])) / (
-                    a_d + b_d + c_d + d_d
+                p1_d = (p(x_vec[i] - step_x / 2, y_vec[j])) / step_x**2
+                p2_d = (p(x_vec[i] + step_x / 2, y_vec[j])) / step_x**2
+                q1_d = (q(x_vec[i], y_vec[j] - step_y / 2)) / step_y**2
+                q2_d = (q(x_vec[i], y_vec[j] + step_y / 2)) / step_y**2
+                u_cur[i][j] = (p1 + p2 + q1 + q2 + f(x_vec[i], y_vec[j])) / (
+                    p1_d + p2_d + q1_d + q2_d
                 )
         k += 1
 
         u_prev = np.copy(u_cur)
-        u_k_list.append(np.copy(u_cur))
+        u_list.append(np.copy(u_cur))
 
-    return u_k_list, k
+    return u_list, k

@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from utils import fill_boundary_grid, get_exact_solution, matrix_norm
+from utils import fill_boundary_grid, get_expected_solution_grid, matrix_norm
 from definitions import p, q, f
 
 
@@ -12,16 +12,16 @@ def get_tau(
     step_x: np.float64,
     step_y: np.float64,
 ) -> np.float64:
-    sigma = c1 * (4 / (step_x**2)) * ((np.sin((np.pi * step_x) / 2)) ** 2) + d1 * (
+    delta1 = c1 * (4 / (step_x**2)) * ((np.sin((np.pi * step_x) / 2)) ** 2) + d1 * (
         4 / (step_y**2)
     ) * ((np.sin((np.pi * step_y) / (2 * np.pi))) ** 2)
-    delta = c2 * (4 / (step_x**2)) * ((np.cos((np.pi * step_x) / 2)) ** 2) + d2 * (
+    delta2 = c2 * (4 / (step_x**2)) * ((np.cos((np.pi * step_x) / 2)) ** 2) + d2 * (
         4 / (step_y**2)
     ) * ((np.cos((np.pi * step_y) / (2 * np.pi))) ** 2)
-    return 2 / (delta + sigma)
+    return 2 / (delta2 + delta1)
 
 
-def iteration_optimal(
+def iteration_with_optimal_parameter(
     x_vec: NDArray,
     y_vec: NDArray,
     x_step: np.float64,
@@ -34,47 +34,44 @@ def iteration_optimal(
     u_prev = fill_boundary_grid(x_vec, y_vec)
     u_cur = fill_boundary_grid(x_vec, y_vec)
     u_0 = np.copy(u_prev)
-    u_k_list = [u_0]
-    exact = get_exact_solution(x_vec, y_vec)
+    u_list = [u_0]
+    expected = get_expected_solution_grid(x_vec, y_vec)
 
     should_continue = (
-        lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
+        lambda u_cur: matrix_norm(u_cur - expected) > eps
     )
     # while k < iter:
-    while should_continue(u_cur, exact, eps):
+    while should_continue(u_cur):
         for i in range(1, len(x_vec) - 1):
             for j in range(1, len(y_vec) - 1):
-                delta_x_sq = x_step**2
-                delta_y_sq = y_step**2
-
-                term1 = (
+                p1 = (
                     p(x_vec[i] + x_step / 2, y_vec[j])
                     * (u_prev[i + 1][j] - u_prev[i][j])
-                    / delta_x_sq
+                    / x_step**2
                 )
-                term2 = (
+                p2 = (
                     p(x_vec[i] - x_step / 2, y_vec[j])
                     * (u_prev[i][j] - u_prev[i - 1][j])
-                    / delta_x_sq
+                    / x_step**2
                 )
-                term3 = (
+                p3 = (
                     q(x_vec[i], y_vec[j] + y_step / 2)
                     * (u_prev[i][j + 1] - u_prev[i][j])
-                    / delta_y_sq
+                    / y_step**2
                 )
-                term4 = (
+                p4 = (
                     q(x_vec[i], y_vec[j] - y_step / 2)
                     * (u_prev[i][j] - u_prev[i][j - 1])
-                    / delta_y_sq
+                    / y_step**2
                 )
-                term5 = f(x_vec[i], y_vec[j])
+                f_ = f(x_vec[i], y_vec[j])
 
                 u_cur[i][j] = u_prev[i][j] + tau * (
-                    term1 - term2 + term3 - term4 + term5
+                    p1 - p2 + p3 - p4 + f_
                 )
         k += 1
 
         u_prev = np.copy(u_cur)
-        u_k_list.append(np.copy(u_cur))
+        u_list.append(np.copy(u_cur))
 
-    return u_k_list, k
+    return u_list, k

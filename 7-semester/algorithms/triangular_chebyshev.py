@@ -3,9 +3,9 @@ from numpy.typing import NDArray
 from typing import List
 from utils import (
     fill_boundary_grid,
-    get_exact_solution,
+    get_expected_solution_grid,
     matrix_norm,
-    calculate_lhu,
+    calc_l_u,
     get_f_grid,
 )
 from definitions import p, q
@@ -21,7 +21,7 @@ def chebyshev_coeffs(gamma_1: np.float64, gamma_2: np.float64) -> list[np.float6
     return tau_k
 
 
-def triangle_method(
+def triangular_method_with_chebyshev_parameters(
     x_vec: NDArray,
     y_vec: NDArray,
     x_step: np.float64,
@@ -38,7 +38,7 @@ def triangle_method(
     u_cur = fill_boundary_grid(x_vec, y_vec)
     u_0 = np.copy(u_prev)
     u_k_list = [u_0]
-    exact = get_exact_solution(x_vec, y_vec)
+    exact = get_expected_solution_grid(x_vec, y_vec)
 
     should_continue = (
         lambda u_cur, exact, eps: matrix_norm(u_cur - exact) > eps
@@ -47,7 +47,7 @@ def triangle_method(
     while should_continue(u_cur, exact, eps):
         lower_w = np.zeros((len(x_vec), len(y_vec)))
         upper_w = np.zeros((len(x_vec), len(y_vec)))
-        F = calculate_lhu(u_prev, x_vec, y_vec, x_step, y_step) + f_grid
+        F = calc_l_u(u_prev, x_vec, y_vec, x_step, y_step) + f_grid
         for i in range(1, len(x_vec) - 1):
             for j in range(1, len(y_vec) - 1):
                 term1 = kappa_1 * p(x_vec[i] - x_step / 2, y_vec[j]) * lower_w[i - 1][j]

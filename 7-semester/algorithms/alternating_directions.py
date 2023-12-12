@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 from typing import List
 from utils import (
     fill_boundary_grid,
-    get_exact_solution,
+    get_expected_solution_grid,
     matrix_norm,
 )
 from definitions import p, q, f, mu
@@ -116,7 +116,7 @@ def alternating_directions_method(
     eps: np.float64,
 ):
     k = 0
-    exact = get_exact_solution(x_vec, y_vec)
+    exact = get_expected_solution_grid(x_vec, y_vec)
     u_prev = fill_boundary_grid(x_vec, y_vec)
 
     u_0 = np.copy(u_prev)
